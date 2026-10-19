@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090d18">
+<meta name="description" content="A relaxing interactive physics sandbox. Drop colorful particles, change gravity, and watch satisfying collisions.">
+<title>Orbit & Bounce — Physics Playground</title>
+<style>
+:root{color-scheme:dark;--bg:#090d18;--panel:#111827;--panel2:#0d1422;--line:#263247;--text:#eef4ff;--muted:#9caec8;--accent:#8b9cff;--mint:#74f0cf}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -10%,#1b2850 0%,var(--bg) 55%);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1180px;margin:auto;padding:22px 16px 30px}.top{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px}
+.brand{display:flex;gap:12px;align-items:center}.logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#8b9cff,#74f0cf);display:grid;place-items:center;color:#09101c;font-size:22px;font-weight:900;box-shadow:0 0 28px #8b9cff40}
+h1{font-size:clamp(22px,4vw,31px);line-height:1.1;margin:0;letter-spacing:-.04em}.sub{margin:5px 0 0;color:var(--muted);font-size:13px}.top-actions{display:flex;gap:8px;flex-wrap:wrap}
+button,select,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:#172136;color:var(--text);border-radius:11px;padding:10px 13px;transition:transform .12s,border-color .12s,background .12s}button:hover{border-color:#7186bb;background:#1b2942}button:active{transform:scale(.98)}button.primary{background:var(--accent);color:#09101c;border-color:transparent;font-weight:750}button.ghost{background:transparent}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 285px;gap:14px;align-items:start}.stage-card,.panel{background:linear-gradient(180deg,#111a2b,#0e1523);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 18px 60px #0002}
+.stage-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 15px;border-bottom:1px solid #202c40;flex-wrap:wrap}.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}.dot{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 10px #74f0cf}.canvas-wrap{position:relative;height:min(66vh,620px);min-height:350px;background:#080d18;touch-action:manipulation}canvas{width:100%;height:100%;display:block;cursor:crosshair}.hint{position:absolute;left:14px;bottom:12px;padding:7px 10px;border:1px solid #ffffff16;border-radius:10px;background:#0a1120c9;color:#aebbd1;font-size:11px;pointer-events:none}.stage-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:11px 15px;color:var(--muted);font-size:12px}.stats{display:flex;gap:15px}.stats strong{color:var(--text);font-weight:700}
+.side{display:grid;gap:14px}.panel{padding:16px}.panel h2{font-size:14px;margin:0 0 14px;letter-spacing:.01em}.control{margin:13px 0 16px}.label-row{display:flex;justify-content:space-between;gap:10px;color:#d9e4f8;font-size:12px;margin-bottom:8px}.label-row output{color:var(--mint);font-variant-numeric:tabular-nums}input[type=range]{width:100%;accent-color:var(--accent)}.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.seg button{padding:8px 5px;font-size:12px}.seg button.active{border-color:var(--accent);background:#293457;color:white}.palette{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}.swatch{height:25px;padding:0;border-radius:8px;border:2px solid #ffffff24}.swatch.active{outline:2px solid white;outline-offset:2px}.button-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.wide{width:100%}.mini{font-size:11px;color:var(--muted);margin:12px 0 0}.divider{height:1px;background:#263247;margin:15px 0}.about{color:var(--muted);font-size:12px}.about strong{color:var(--text)}.pill{display:inline-block;border:1px solid #34415c;padding:3px 7px;border-radius:999px;font-size:10px;color:#c6d3ea;margin:0 4px 4px 0}
+footer{margin-top:18px;color:#7f90aa;font-size:11px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}footer a{color:#b8c8f4}
+@media(max-width:820px){.layout{grid-template-columns:1fr}.side{grid-template-columns:repeat(2,minmax(0,1fr))}.canvas-wrap{height:55vh;min-height:330px}.panel:last-child{grid-column:1/-1}}
+@media(max-width:520px){.wrap{padding:15px 10px 24px}.side{grid-template-columns:1fr}.panel:last-child{grid-column:auto}.canvas-wrap{min-height:320px}.top{align-items:flex-start}.top-actions{width:100%}.top-actions button{flex:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><div class="logo">◉</div><div><h1>Orbit &amp; Bounce</h1><p class="sub">A tiny physics playground for your curious side.</p></div></div>
+    <div class="top-actions"><button id="pauseBtn" class="ghost">Ⅱ Pause</button><button id="resetBtn" class="ghost">↺ Reset</button><button id="burstBtn" class="primary">✦ Particle burst</button></div>
+  </header>
+  <main class="layout">
+    <section class="stage-card">
+      <div class="stage-head"><div class="status"><span class="dot"></span><span id="statusText">Simulation running</span></div><div><span class="pill">GRAVITY</span><span class="pill">COLLISIONS</span><span class="pill">PARTICLES</span></div></div>
+      <div class="canvas-wrap" id="canvasWrap"><canvas id="world" aria-label="Interactive particle physics simulation"></canvas><div class="hint">Tap or click to drop balls · Drag to throw · Try a burst</div></div>
+      <div class="stage-foot"><div class="stats"><span>Objects <strong id="count">0</strong></span><span>FPS <strong id="fps">—</strong></span></div><span>Made for curious minds ✦</span></div>
+    </section>
+    <aside class="side">
+      <section class="panel">
+        <h2>WORLD SETTINGS</h2>
+        <div class="control"><div class="label-row"><label for="gravity">Gravity</label><output id="gravityOut">0.32</output></div><input id="gravity" type="range" min="0" max="1" step=".01" value=".32"></div>
+        <div class="control"><div class="label-row"><label for="bounce">Bounciness</label><output id="bounceOut">0.86</output></div><input id="bounce" type="range" min=".2" max="1" step=".01" value=".86"></div>
+        <div class="control"><div class="label-row"><label for="size">Ball size</label><output id="sizeOut">Medium</output></div><div class="seg" id="sizeSeg"><button data-size="small">Small</button><button data-size="medium" class="active">Medium</button><button data-size="large">Large</button></div></div>
+        <div class="control"><div class="label-row"><label for="density">Spawn amount</label><output id="densityOut">8</output></div><input id="density" type="range" min="1" max="24" step="1" value="8"></div>
+        <div class="control"><div class="label-row"><span>Color</span><output id="colorOut">Aurora</output></div><div class="palette" id="palette">
+          <button class="swatch active" data-color="#8b9cff" aria-label="Aurora blue" style="background:#8b9cff"></button><button class="swatch" data-color="#74f0cf" aria-label="Mint" style="background:#74f0cf"></button><button class="swatch" data-color="#ff8fbd" aria-label="Pink" style="background:#ff8fbd"></button><button class="swatch" data-color="#ffc66d" aria-label="Amber" style="background:#ffc66d"></button><button class="swatch" data-color="#b69cff" aria-label="Violet" style="background:#b69cff"></button><button class="swatch" data-color="rainbow" aria-label="Rainbow" style="background:linear-gradient(90deg,#ff7272,#ffc66d,#74f0cf,#8b9cff,#b69cff)"></button>
+        </div></div>
+        <div class="divider"></div>
+        <div class="button-grid"><button id="rainBtn">☄ Rain</button><button id="clearBtn">Clear all</button><button id="slowBtn">◷ Slow motion</button><button id="wallsBtn">▣ Walls: on</button></div>
+        <p class="mini">Tip: reduce gravity for floaty motion, then use a burst to fill the screen.</p>
+      </section>
+      <section class="panel">
+        <h2>MAKE A MOMENT</h2>
+        <div class="button-grid"><button id="fountainBtn">⤴ Fountain</button><button id="confettiBtn">✧ Confetti</button></div>
+        <div class="divider"></div>
+        <div class="about"><strong>How it works</strong><br>Each ball follows a simple gravity-and-collision model. This is a playful visual sandbox, not a precision scientific simulator.</div>
+      </section>
+      <section class="panel">
+        <h2>THE PROJECT</h2>
+        <div class="about">Orbit &amp; Bounce is an independent browser experiment. It works without an account and doesn't need a server to run.</div>
+        <p class="mini">Monetization idea: add clearly labelled ad placements only after the site has useful content and a real audience. Never use forced redirects or fake clicks.</p>
+      </section>
+    </aside>
+  </main>
+  <footer><span>Orbit &amp; Bounce · Prototype v1</span><span>Local-first demo · No tracking or sign-in</span></footer>
+</div>
+<script>
+(()=>{
+const canvas=document.getElementById('world'),ctx=canvas.getContext('2d'),wrap=document.getElementById('canvasWrap');
+const $=id=>document.getElementById(id);
+let W=0,H=0,dpr=1,balls=[],running=true,rain=false,slow=false,walls=true,last=0,frames=0,fpsTimer=0,fpsValue=0;
+let gravity=.32,bounce=.86,spawnAmount=8,sizeMode='medium',selectedColor='#8b9cff',rainbow=false,drag=null,trail=[];
+const colors=['#8b9cff','#74f0cf','#ff8fbd','#ffc66d','#b69cff','#70d7ff'];
+const sizes={small:5,medium:9,large:15};
+const rand=(a,b)=>a+Math.random()*(b-a);
+function color(){return rainbow?colors[Math.floor(Math.random()*colors.length)]:selectedColor}
+function resize(){const r=wrap.getBoundingClientRect();dpr=Math.min(window.devicePixelRatio||1,2);W=r.width;H=r.height;canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);balls.forEach(b=>{b.x=Math.min(W-b.r,Math.max(b.r,b.x));b.y=Math.min(H-b.r,Math.max(b.r,b.y))})}
+function addBall(x=rand(20,W-20),y=10,vx=rand(-2.3,2.3),vy=rand(-1,2),r=sizes[sizeMode],c=color()){if(balls.length>=260)balls.splice(0,Math.min(30,balls.length-230));balls.push({x,y,vx,vy,r,c,life:0,spin:rand(-.05,.05)})}
+function burst(x=W/2,y=H*.25,n=spawnAmount*2,force=5){for(let i=0;i<n;i++){let a=rand(0,Math.PI*2),s=rand(1,force);addBall(x,y,Math.cos(a)*s,Math.sin(a)*s,sizes[sizeMode]*rand(.65,1.15),color())}}
+function reset(){balls=[];for(let i=0;i<18;i++)addBall(rand(30,W-30),rand(10,H*.5),rand(-1.5,1.5),rand(-.5,1),sizes[sizeMode]*rand(.7,1.1),color())}
+function circle(b){ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,Math.PI*2);let g=ctx.createRadialGradient(b.x-b.r*.35,b.y-b.r*.4,1,b.x,b.y,b.r*1.4);g.addColorStop(0,'#ffffffc9');g.addColorStop(.25,b.c);g.addColorStop(1,b.c+'44');ctx.fillStyle=g;ctx.shadowColor=b.c;ctx.shadowBlur=12;ctx.fill();ctx.shadowBlur=0;ctx.beginPath();ctx.arc(b.x-b.r*.28,b.y-b.r*.32,Math.max(1,b.r*.17),0,Math.PI*2);ctx.fillStyle='#ffffffa0';ctx.fill()}
+function tick(t){if(!running){requestAnimationFrame(tick);return}let dt=Math.min((t-last||16.67)/16.67,2)*(slow?.35:1);last=t;frames++;fpsTimer+=16.67;if(fpsTimer>600){fpsValue=Math.round(frames/(fpsTimer/1000));$('fps').textContent=fpsValue;frames=0;fpsTimer=0}
+ctx.clearRect(0,0,W,H);ctx.fillStyle='#080d18';ctx.fillRect(0,0,W,H);
+const grd=ctx.createRadialGradient(W*.5,H*.25,5,W*.5,H*.25,Math.max(W,H)*.75);grd.addColorStop(0,'#172344');grd.addColorStop(1,'#080d18');ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
+ctx.strokeStyle='#ffffff08';ctx.lineWidth=1;for(let x=0;x<W;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=0;y<H;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+if(rain&&Math.random()<.75)addBall(rand(8,W-8),-10,rand(-.7,.7),rand(0,2),sizes[sizeMode]*rand(.5,1),color());
+for(let i=balls.length-1;i>=0;i--){let b=balls[i];b.life+=dt;b.vy+=gravity*dt;b.x+=b.vx*dt;b.y+=b.vy*dt;b.vx*=.999;
+if(walls){if(b.x-b.r<0){b.x=b.r;b.vx=Math.abs(b.vx)*bounce}if(b.x+b.r>W){b.x=W-b.r;b.vx=-Math.abs(b.vx)*bounce}if(b.y-b.r<0){b.y=b.r;b.vy=Math.abs(b.vy)*bounce}if(b.y+b.r>H){b.y=H-b.r;b.vy=-Math.abs(b.vy)*bounce;if(Math.abs(b.vy)<.35)b.vy=0;b.vx*=.992}}
+else if(b.y>H+80||b.x<-80||b.x>W+80){balls.splice(i,1);continue}
+circle(b)}
+// inexpensive pairwise collisions, capped by the object limit
+for(let i=0;i<balls.length;i++)for(let j=i+1;j<balls.length;j++){let a=balls[i],b=balls[j],dx=b.x-a.x,dy=b.y-a.y,dist=Math.hypot(dx,dy),min=a.r+b.r;if(dist>0&&dist<min){let nx=dx/dist,ny=dy/dist,over=(min-dist)*.5;a.x-=nx*over;a.y-=ny*over;b.x+=nx*over;b.y+=ny*over;let rel=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;if(rel<0){let imp=-(1+bounce)*rel*.5;a.vx-=imp*nx;a.vy-=imp*ny;b.vx+=imp*nx;b.vy+=imp*ny}}}
+if(drag){ctx.beginPath();ctx.moveTo(drag.x,drag.y);ctx.lineTo(drag.cx,drag.cy);ctx.strokeStyle='#ffffff80';ctx.lineWidth=2;ctx.setLineDash([5,6]);ctx.stroke();ctx.setLineDash([])}
+$('count').textContent=balls.length;requestAnimationFrame(tick)}
+function pos(e){let r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);let p=pos(e);drag={...p,cx:p.x,cy:p.y,started:performance.now()}})
+canvas.addEventListener('pointermove',e=>{if(drag){let p=pos(e);drag.cx=p.x;drag.cy=p.y}})
+canvas.addEventListener('pointerup',e=>{if(!drag)return;let p=pos(e),dx=drag.x-p.x,dy=drag.y-p.y;if(Math.hypot(dx,dy)>10){for(let i=0;i<Math.min(spawnAmount,10);i++)addBall(drag.x,drag.y,dx*.045+rand(-1,1),dy*.045+rand(-1,1),sizes[sizeMode]*rand(.7,1.1),color())}else for(let i=0;i<Math.min(spawnAmount,12);i++)addBall(p.x+rand(-15,15),p.y+rand(-12,12),rand(-2,2),rand(-1,1),sizes[sizeMode]*rand(.65,1.15),color());drag=null})
+canvas.addEventListener('pointercancel',()=>drag=null);
+$('gravity').addEventListener('input',e=>{gravity=+e.target.value;$('gravityOut').textContent=gravity.toFixed(2)});
+$('bounce').addEventListener('input',e=>{bounce=+e.target.value;$('bounceOut').textContent=bounce.toFixed(2)});
+$('density').addEventListener('input',e=>{spawnAmount=+e.target.value;$('densityOut').textContent=spawnAmount});
+document.querySelectorAll('#sizeSeg button').forEach(b=>b.addEventListener('click',()=>{sizeMode=b.dataset.size;document.querySelectorAll('#sizeSeg button').forEach(x=>x.classList.toggle('active',x===b));$('sizeOut').textContent=sizeMode[0].toUpperCase()+sizeMode.slice(1)}));
+const colorNames={'#8b9cff':'Aurora','#74f0cf':'Mint','#ff8fbd':'Pink','#ffc66d':'Amber','#b69cff':'Violet','rainbow':'Rainbow'};
+document.querySelectorAll('.swatch').forEach(b=>b.addEventListener('click',()=>{rainbow=b.dataset.color==='rainbow';selectedColor=b.dataset.color;document.querySelectorAll('.swatch').forEach(x=>x.classList.toggle('active',x===b));$('colorOut').textContent=colorNames[b.dataset.color]}));
+$('pauseBtn').addEventListener('click',()=>{running=!running;$('pauseBtn').textContent=running?'Ⅱ Pause':'▶ Resume';$('statusText').textContent=running?'Simulation running':'Simulation paused';$('pauseBtn').setAttribute('aria-pressed',String(!running))});
+$('resetBtn').addEventListener('click',reset);$('burstBtn').addEventListener('click',()=>burst(W/2,H*.25,spawnAmount*3,6));
+$('clearBtn').addEventListener('click',()=>{balls=[]});$('rainBtn').addEventListener('click',()=>{rain=!rain;$('rainBtn').textContent=rain?'☄ Rain: on':'☄ Rain'});
+$('slowBtn').addEventListener('click',()=>{slow=!slow;$('slowBtn').textContent=slow?'◷ Slow: on':'◷ Slow motion'});
+$('wallsBtn').addEventListener('click',()=>{walls=!walls;$('wallsBtn').textContent=walls?'▣ Walls: on':'▣ Walls: off'});
+$('fountainBtn').addEventListener('click',()=>{for(let i=0;i<spawnAmount*2;i++)addBall(W/2+rand(-20,20),H-10,rand(-4,4),rand(-7,-2),sizes[sizeMode]*rand(.65,1),color())});
+$('confettiBtn').addEventListener('click',()=>{for(let i=0;i<spawnAmount*3;i++)addBall(rand(0,W),rand(0,H*.45),rand(-3,3),rand(-3,2),sizes[sizeMode]*rand(.45,.9),color())});
+window.addEventListener('resize',resize);resize();reset();requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
